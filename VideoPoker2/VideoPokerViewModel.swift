@@ -306,6 +306,8 @@ final class VideoPokerViewModel {
         lastWin = 0
         winningHandType = nil
         showRoyalFlushEffect = false
+        lastDoubleCard = nil
+        isFlippingDoubleCard = false
         showDoubleScreen = true
     }
     
@@ -320,11 +322,14 @@ final class VideoPokerViewModel {
         lastDoubleCard = drawnCard
         isFlippingDoubleCard = false
         
-        withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-            isFlippingDoubleCard = true
-        }
-        
         Task {
+            // Laisse le temps à SwiftUI d'afficher la nouvelle carte face cachée
+            try? await Task.sleep(for: .milliseconds(50))
+            
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                isFlippingDoubleCard = true
+            }
+            
             try? await Task.sleep(for: .seconds(0.6))
             let isCorrect = (choiceIsRed && drawnCard.isRed) || (!choiceIsRed && !drawnCard.isRed)
             
