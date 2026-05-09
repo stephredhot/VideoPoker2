@@ -2,9 +2,9 @@
 ## 🎯 Améliorations possibles (Roadmap)
 
 - [ ] Stratégie optimale Auto Hold (perfect strategy)
-- [ ] Mode plein écran + redimensionnement adaptatif
+- [X] Mode plein écran + redimensionnement adaptatif
 - [ ] Sauvegarde des statistiques (meilleurs gains, mains jouées…)
 - [ ] Plusieurs variantes (Deuces Wild, Joker Poker…)
-- [ ] Effets de particules sur les gros gains
+- [X] Effets de particules sur les gros gains
 - [ ] Support clavier (touches 1-5 pour HOLD)
 

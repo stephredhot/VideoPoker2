@@ -84,7 +84,7 @@ Compatible **macOS** (testé sur Ventura/Sonoma/Sequoia).
 
 ## 👨‍💻 Auteur
 
-**Stéphane Bertin**
+**Stephredhot**
 Développé avec passion en avril 2026
 
 ---
