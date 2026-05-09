@@ -3,8 +3,6 @@ import SwiftUI
 struct ContentView: View {
     // MARK: - Data
     @State private var viewModel = VideoPokerViewModel()
-    @AppStorage("playerCredits") private var savedCredits: Int = 1000
-    @AppStorage("playerBet") private var savedBet: Int = 1
     
     // MARK: - Body
     var body: some View {
@@ -115,16 +113,6 @@ struct ContentView: View {
             }
         }
         .preferredColorScheme(.dark)
-        .onAppear {
-            viewModel.credits = savedCredits
-            viewModel.bet = savedBet
-        }
-        .onChange(of: viewModel.credits) { _, newValue in
-            savedCredits = newValue
-        }
-        .onChange(of: viewModel.bet) { _, newValue in
-            savedBet = newValue
-        }
         .sheet(isPresented: $viewModel.showDoubleScreen) {
             DoubleOrNothingView(viewModel: viewModel)
         }

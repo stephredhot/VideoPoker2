@@ -10,9 +10,16 @@ import SwiftUI
 @MainActor @Observable
 final class VideoPokerViewModel {
     
+    // MARK: - Constantes
+    private static let maxDoubleAttempts = 4
+
     // MARK: - États publics
-    var credits: Int = 1000
-    var bet: Int = 1
+    var credits: Int = UserDefaults.standard.object(forKey: "playerCredits") as? Int ?? 1000 {
+        didSet { UserDefaults.standard.set(credits, forKey: "playerCredits") }
+    }
+    var bet: Int = UserDefaults.standard.object(forKey: "playerBet") as? Int ?? 1 {
+        didSet { UserDefaults.standard.set(bet, forKey: "playerBet") }
+    }
     var hand: [Card] = []
     var heldIndices: Set<Int> = []
     
@@ -37,7 +44,7 @@ final class VideoPokerViewModel {
     }
     
     var canDouble: Bool {
-        doubleWin > 0 && doubleCount < 4 && !isDoubleAnimating
+        doubleWin > 0 && doubleCount < Self.maxDoubleAttempts && !isDoubleAnimating
     }
     
     //MARK: - Etats privés
@@ -91,7 +98,6 @@ final class VideoPokerViewModel {
         credits -= bet
         resetHand()
         deck.reset()
-        deck.shuffle()
         faceUpCards.removeAll()
         
         hand = (0..<5).compactMap { _ in deck.deal() }
@@ -304,12 +310,11 @@ final class VideoPokerViewModel {
     }
     
     func doubleOnColor(choiceIsRed: Bool) {
-        guard doubleCount < 4 && doubleWin > 0 else { return }
+        guard doubleCount < Self.maxDoubleAttempts && doubleWin > 0 else { return }
         
         SoundManager.shared.playButton()
         
         deck.reset()
-        deck.shuffle()
         guard let drawnCard = deck.deal() else { return }
         
         lastDoubleCard = drawnCard
@@ -424,9 +429,16 @@ final class VideoPokerViewModel {
         for skip in 0..<5 {
             let kept = (0..<5).filter { $0 != skip }
             let values = kept.map { hand[$0].rank.rawValue }.sorted()
-            if Set(values).count == 4 && values[3] - values[0] == 3 {
-                heldIndices = Set(kept)
-                return
+            if Set(values).count == 4 {
+                if values[3] - values[0] == 3 {
+                    heldIndices = Set(kept)
+                    return
+                }
+                // Détection de la suite par le bas (A-2-3-4)
+                if values == [2, 3, 4, 14] {
+                    heldIndices = Set(kept)
+                    return
+                }
             }
         }
         

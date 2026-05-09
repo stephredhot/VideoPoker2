@@ -107,6 +107,7 @@ struct Deck {
                 cards.append(Card(rank: rank, suit: suit))
             }
         }
+        shuffle()
     }
     
     mutating func shuffle() {
