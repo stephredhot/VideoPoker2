@@ -12,7 +12,9 @@ struct CardView: View {
     let isHeld: Bool
     let isFaceUp: Bool
     let isWinning: Bool
-
+    
+    @State private var winningPulse = 1.0
+    
     var body: some View {
         ZStack {
             if isFaceUp, let card = card {
@@ -38,9 +40,26 @@ struct CardView: View {
             perspective: 0.5
         )
         .animation(.spring(response: 0.5, dampingFraction: 0.7), value: isFaceUp)
-        .scaleEffect(isWinning ? 1.20 : 1.0)
-        .offset(y: isWinning ? -16 : 0)
-        .animation(.spring(response: 0.45, dampingFraction: 0.5), value: isWinning)
+        .scaleEffect(isWinning ? winningPulse : 1.0)
+        .animation(.spring(response: 0.45, dampingFraction: 0.7), value: isWinning)
+        .onChange(of: isWinning) { _, newValue in
+            if newValue {
+                withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
+                    winningPulse = 1.06
+                }
+            } else {
+                withAnimation(.easeOut(duration: 0.3)) {
+                    winningPulse = 1.0
+                }
+            }
+        }
+        .onAppear {
+            if isWinning {
+                withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
+                    winningPulse = 1.06
+                }
+            }
+        }
         
         // Utilisation de l'overlay personnalisé défini plus bas
         .overlay(alignment: .top) {
