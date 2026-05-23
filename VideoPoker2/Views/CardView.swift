@@ -38,9 +38,9 @@ struct CardView: View {
             perspective: 0.5
         )
         .animation(.spring(response: 0.5, dampingFraction: 0.7), value: isFaceUp)
-        .scaleEffect(isWinning ? 1.15 : 1.0)
-        .offset(y: isWinning ? -12 : 0)
-        .animation(.spring(response: 0.5, dampingFraction: 0.5), value: isWinning)
+        .scaleEffect(isWinning ? 1.20 : 1.0)
+        .offset(y: isWinning ? -16 : 0)
+        .animation(.spring(response: 0.45, dampingFraction: 0.5), value: isWinning)
         
         // Utilisation de l'overlay personnalisé défini plus bas
         .overlay(alignment: .top) {

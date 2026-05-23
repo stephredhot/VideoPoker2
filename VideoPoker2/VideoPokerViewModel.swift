@@ -214,10 +214,8 @@ final class VideoPokerViewModel {
             winningCardIndices = []
         }
         
+        heldIndices.removeAll()
         gamePhase = .result
-        withAnimation {
-            heldIndices.removeAll()
-        }
     }
 
     private func determineWinningCardIndices(for handType: HandType, in cards: [Card]) -> Set<Int> {
