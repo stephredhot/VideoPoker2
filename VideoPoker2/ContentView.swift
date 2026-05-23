@@ -31,7 +31,7 @@ struct ContentView: View {
                             // 1. La Carte
                             CardView(
                                 card: viewModel.hand.count > index ? viewModel.hand[index] : nil,
-                                isHeld: viewModel.heldIndices.contains(index),
+                                isHeld: viewModel.gamePhase != .result && viewModel.heldIndices.contains(index),
                                 isFaceUp: viewModel.faceUpCards.contains(index),
                                 isWinning: viewModel.winningCardIndices.contains(index)
                             )
@@ -44,7 +44,7 @@ struct ContentView: View {
                             
                             // 2. Le Bouton Hold (centré sous la carte)
                             // On utilise l'opacité pour garder l'espace même si caché
-                            HoldButton(isHeld: viewModel.heldIndices.contains(index)) {
+                            HoldButton(isHeld: viewModel.gamePhase != .result && viewModel.heldIndices.contains(index)) {
                                 viewModel.toggleHold(at: index)
                             }
                             .opacity(viewModel.gamePhase == .dealt ? 1.0 : 0.0)
