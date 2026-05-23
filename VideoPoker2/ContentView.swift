@@ -32,7 +32,8 @@ struct ContentView: View {
                             CardView(
                                 card: viewModel.hand.count > index ? viewModel.hand[index] : nil,
                                 isHeld: viewModel.heldIndices.contains(index),
-                                isFaceUp: viewModel.faceUpCards.contains(index)
+                                isFaceUp: viewModel.faceUpCards.contains(index),
+                                isWinning: viewModel.winningCardIndices.contains(index)
                             )
                             .onTapGesture {
                                 if viewModel.hand.count > index {

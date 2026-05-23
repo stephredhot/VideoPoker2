@@ -35,7 +35,8 @@ struct DoubleOrNothingView: View {
                     CardView(
                         card: card,
                         isHeld: false,
-                        isFaceUp: viewModel.isFlippingDoubleCard
+                        isFaceUp: viewModel.isFlippingDoubleCard,
+                        isWinning: false
                     )
                     .id(card.id) // Force l'animation à chaque nouvelle carte
                 } else {

@@ -32,6 +32,7 @@ final class VideoPokerViewModel {
     var doubleCount: Int = 0
     
     var winningHandType: HandType? = nil
+    var winningCardIndices: Set<Int> = []
     
     var faceUpCards: Set<Int> = []
     
@@ -203,15 +204,72 @@ final class VideoPokerViewModel {
         if totalWin > 0 {
             message = "\(handType.rawValue) ! +\(totalWin) crédits"
             SoundManager.shared.playWin()
+            winningCardIndices = determineWinningCardIndices(for: handType, in: hand)
             if handType == .royalFlush {
                 showRoyalFlushEffect = true
             }
         } else {
             message = "Perdu - \(handType.rawValue)"
             winningHandType = nil
+            winningCardIndices = []
         }
         
         gamePhase = .result
+    }
+
+    private func determineWinningCardIndices(for handType: HandType, in cards: [Card]) -> Set<Int> {
+        guard cards.count == 5 else { return [] }
+        
+        switch handType {
+        case .royalFlush, .straightFlush, .fullHouse, .flush, .straight:
+            // Toutes les 5 cartes contribuent à la combinaison
+            return Set(0..<5)
+            
+        case .fourOfAKind:
+            // Trouver le rang qui apparaît 4 fois
+            var rankCounts: [Rank: Int] = [:]
+            for card in cards {
+                rankCounts[card.rank, default: 0] += 1
+            }
+            if let targetRank = rankCounts.first(where: { $0.value == 4 })?.key {
+                return Set(cards.enumerated().filter { $0.element.rank == targetRank }.map { $0.offset })
+            }
+            return []
+            
+        case .threeOfAKind:
+            // Trouver le rang qui apparaît 3 fois
+            var rankCounts: [Rank: Int] = [:]
+            for card in cards {
+                rankCounts[card.rank, default: 0] += 1
+            }
+            if let targetRank = rankCounts.first(where: { $0.value == 3 })?.key {
+                return Set(cards.enumerated().filter { $0.element.rank == targetRank }.map { $0.offset })
+            }
+            return []
+            
+        case .twoPair:
+            // Trouver les 2 rangs qui apparaissent 2 fois
+            var rankCounts: [Rank: Int] = [:]
+            for card in cards {
+                rankCounts[card.rank, default: 0] += 1
+            }
+            let targetRanks = rankCounts.filter { $0.value == 2 }.map { $0.key }
+            return Set(cards.enumerated().filter { targetRanks.contains($0.element.rank) }.map { $0.offset })
+            
+        case .jacksOrBetter:
+            // Trouver le rang de la paire supérieure ou égale au Valet
+            var rankCounts: [Rank: Int] = [:]
+            for card in cards {
+                rankCounts[card.rank, default: 0] += 1
+            }
+            if let targetRank = rankCounts.first(where: { $0.value == 2 && $0.key.rawValue >= Rank.jack.rawValue })?.key {
+                return Set(cards.enumerated().filter { $0.element.rank == targetRank }.map { $0.offset })
+            }
+            return []
+            
+        case .highCard:
+            return []
+        }
     }
     
     // MARK: - évaluation des mains
@@ -392,6 +450,7 @@ final class VideoPokerViewModel {
         hand.removeAll()
         heldIndices.removeAll()
         winningHandType = nil
+        winningCardIndices = []
         lastWin = 0
     }
     

@@ -111,6 +111,8 @@ struct PaytableRow: View {
         }
         .padding(.vertical, 4)
         .background(isWinningRow ? Color.yellow.opacity(0.2) : Color.clear)
+        .scaleEffect(isWinningRow ? 1.03 : 1.0)
+        .animation(.spring(response: 0.4, dampingFraction: 0.6), value: isWinningRow)
     }
     
     // Extraire la cellule dans une fonction simplifie énormément le travail du compilateur

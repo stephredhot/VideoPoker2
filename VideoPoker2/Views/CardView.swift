@@ -11,6 +11,7 @@ struct CardView: View {
     let card: Card?
     let isHeld: Bool
     let isFaceUp: Bool
+    let isWinning: Bool
 
     var body: some View {
         ZStack {
@@ -21,7 +22,7 @@ struct CardView: View {
                     .aspectRatio(2/3, contentMode: .fit)
                     .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
                     .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .shadow(radius: 8)
+                    .shadow(color: isWinning ? Color.yellow.opacity(0.8) : Color.black.opacity(0.3), radius: isWinning ? 15 : 8)
             } else {
                 // DOS DE LA CARTE
                 Image("back")
@@ -37,6 +38,8 @@ struct CardView: View {
             perspective: 0.5
         )
         .animation(.spring(response: 0.5, dampingFraction: 0.7), value: isFaceUp)
+        .scaleEffect(isWinning ? 1.08 : 1.0)
+        .animation(.spring(response: 0.5, dampingFraction: 0.6), value: isWinning)
         
         // Utilisation de l'overlay personnalisé défini plus bas
         .overlay(alignment: .top) {
@@ -44,11 +47,18 @@ struct CardView: View {
                 HeldOverlay()
             }
         }
+        // Overlay pour le gain
+        .overlay {
+            if isWinning {
+                WinningOverlay()
+            }
+        }
     }
 }
 
-// MARK: - Composant Interne
-// On le place ici car il est spécifique à la CardView
+// MARK: - Composants Internes
+// On les place ici car ils sont spécifiques à la CardView
+
 struct HeldOverlay: View {
     @State private var pulse = 1.0
     @State private var glowOpacity = 0.7
@@ -83,10 +93,38 @@ struct HeldOverlay: View {
     }
 }
 
+struct WinningOverlay: View {
+    @State private var pulse = 1.0
+    @State private var opacity = 0.8
+    
+    var body: some View {
+        RoundedRectangle(cornerRadius: 12)
+            .stroke(
+                LinearGradient(
+                    colors: [.yellow, .gold, .orange, .yellow],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ),
+                lineWidth: 4
+            )
+            .shadow(color: .gold, radius: 8)
+            .scaleEffect(pulse)
+            .opacity(opacity)
+            .onAppear {
+                withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
+                    pulse = 1.02
+                }
+                withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
+                    opacity = 1.0
+                }
+            }
+    }
+}
+
 #Preview {
     ZStack {
         Color.black.ignoresSafeArea()
-        CardView(card: Card(rank: .ace, suit: .spades), isHeld: true, isFaceUp: true)
+        CardView(card: Card(rank: .ace, suit: .spades), isHeld: true, isFaceUp: true, isWinning: true)
             .frame(width: 150)
     }
 }
