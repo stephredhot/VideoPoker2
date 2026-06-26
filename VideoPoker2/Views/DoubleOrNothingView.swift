@@ -62,10 +62,12 @@ struct DoubleOrNothingView: View {
                     DoubleColorButton(title: "ROUGE", color: .red) {
                         viewModel.doubleOnColor(choiceIsRed: true)
                     }
+                    .keyboardShortcut("r", modifiers: [])
                     
                     DoubleColorButton(title: "NOIR", color: .gray) {
                         viewModel.doubleOnColor(choiceIsRed: false)
                     }
+                    .keyboardShortcut("n", modifiers: [])
                 }
                 .disabled(!viewModel.canDouble)
             }
@@ -84,6 +86,7 @@ struct DoubleOrNothingView: View {
             }
             .buttonStyle(.plain)
             .disabled(viewModel.doubleWin == 0)
+            .keyboardShortcut("c", modifiers: [])
         }
         .padding(50)
         .background(

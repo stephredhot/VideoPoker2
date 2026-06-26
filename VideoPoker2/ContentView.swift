@@ -49,6 +49,7 @@ struct ContentView: View {
                             }
                             .opacity(viewModel.gamePhase == .dealt ? 1.0 : 0.0)
                             .disabled(viewModel.gamePhase != .dealt)
+                            .keyboardShortcut(index == 0 ? "1" : index == 1 ? "2" : index == 2 ? "3" : index == 3 ? "4" : "5", modifiers: [])
                         }
                     }
                 }
@@ -74,17 +75,20 @@ struct ContentView: View {
                                 viewModel.collectWin()
                             }
                             .buttonStyle(CasinoButtonStyle(color: .green, size: .large))
+                            .keyboardShortcut("c", modifiers: [])
                             
                             Button("DOUBLER") {
                                 viewModel.startDouble()
                             }
                             .buttonStyle(CasinoButtonStyle(color: .orange, size: .large))
+                            .keyboardShortcut("d", modifiers: [])
                         } else if viewModel.gamePhase == .betting || viewModel.gamePhase == .result {
                             if viewModel.credits <= 0 {
                                 Button("RELANCE") {
                                     viewModel.resetCreditsIfBroke()
                                 }
                                 .buttonStyle(CasinoButtonStyle(color: .orange, size: .large))
+                                .keyboardShortcut("r", modifiers: [])
                             } else {
                                 Button("DEAL") {
                                     viewModel.deal()
@@ -94,6 +98,7 @@ struct ContentView: View {
                                     size: .large
                                 ))
                                 .disabled(viewModel.credits < viewModel.bet)
+                                .keyboardShortcut(.space, modifiers: [])
                             }
                         }
                         
@@ -102,15 +107,36 @@ struct ContentView: View {
                                 viewModel.draw()
                             }
                             .buttonStyle(CasinoButtonStyle(color: .red))
+                            .keyboardShortcut(.space, modifiers: [])
                             
                             Button("Auto Hold") {
                                 viewModel.autoHold()
                             }
                             .buttonStyle(CasinoButtonStyle(color: .orange, size: .medium))
+                            .keyboardShortcut("a", modifiers: [])
                         }
                     }
                 }
                 .padding(.bottom, 30)
+                .background {
+                    // Raccourcis invisibles pour ajuster la mise au clavier
+                    if viewModel.gamePhase == .betting || viewModel.gamePhase == .result {
+                        Group {
+                            Button("") { viewModel.increaseBet() }
+                                .keyboardShortcut(.rightArrow, modifiers: [])
+                            Button("") { viewModel.decreaseBet() }
+                                .keyboardShortcut(.leftArrow, modifiers: [])
+                            Button("") { viewModel.increaseBet() }
+                                .keyboardShortcut("+", modifiers: [])
+                            Button("") { viewModel.decreaseBet() }
+                                .keyboardShortcut("-", modifiers: [])
+                            Button("") { viewModel.maxBet() }
+                                .keyboardShortcut("m", modifiers: [])
+                        }
+                        .opacity(0)
+                        .frame(width: 0, height: 0)
+                    }
+                }
             }
         }
         .preferredColorScheme(.dark)

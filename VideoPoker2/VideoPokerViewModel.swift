@@ -39,13 +39,14 @@ final class VideoPokerViewModel {
     var lastDoubleCard: Card? = nil
     var isFlippingDoubleCard: Bool = false
     var showRoyalFlushEffect: Bool = false
+    var isDoubleEvaluating: Bool = false
     
     var isDoubleAnimating: Bool {
         lastDoubleCard != nil && !isFlippingDoubleCard
     }
     
     var canDouble: Bool {
-        doubleWin > 0 && doubleCount < Self.maxDoubleAttempts && !isDoubleAnimating
+        doubleWin > 0 && doubleCount < Self.maxDoubleAttempts && !isDoubleAnimating && !isDoubleEvaluating
     }
     
     //MARK: - Etats privés
@@ -63,6 +64,7 @@ final class VideoPokerViewModel {
     //MARK: - GamePhase
     enum GamePhase {
         case betting
+        case dealing
         case dealt
         case drawing
         case result
@@ -103,12 +105,13 @@ final class VideoPokerViewModel {
         
         hand = (0..<5).compactMap { _ in deck.deal() }
         
-        gamePhase = .dealt
+        gamePhase = .dealing
         message = "Distribution..."
 
         Task {
             try? await Task.sleep(for: .seconds(0.3))
             await revealInitialCards()
+            gamePhase = .dealt
         }
     }
 
@@ -190,7 +193,7 @@ final class VideoPokerViewModel {
     }
 
     private func evaluateHand() {
-        let handType = evaluateHandLogic(hand)
+        let handType = PokerEngine.evaluateHand(hand)
         let totalWin: Int
         if let entry = paytable.first(where: { $0.hand == handType }) {
             totalWin = entry.payouts[bet - 1]
@@ -204,7 +207,7 @@ final class VideoPokerViewModel {
         if totalWin > 0 {
             message = "\(handType.rawValue) ! +\(totalWin) crédits"
             SoundManager.shared.playWin()
-            winningCardIndices = determineWinningCardIndices(for: handType, in: hand)
+            winningCardIndices = PokerEngine.determineWinningCardIndices(for: handType, in: hand)
             if handType == .royalFlush {
                 showRoyalFlushEffect = true
             }
@@ -218,131 +221,7 @@ final class VideoPokerViewModel {
         gamePhase = .result
     }
 
-    private func determineWinningCardIndices(for handType: HandType, in cards: [Card]) -> Set<Int> {
-        guard cards.count == 5 else { return [] }
-        
-        switch handType {
-        case .royalFlush, .straightFlush, .fullHouse, .flush, .straight:
-            // Toutes les 5 cartes contribuent à la combinaison
-            return Set(0..<5)
-            
-        case .fourOfAKind:
-            // Trouver le rang qui apparaît 4 fois
-            var rankCounts: [Rank: Int] = [:]
-            for card in cards {
-                rankCounts[card.rank, default: 0] += 1
-            }
-            if let targetRank = rankCounts.first(where: { $0.value == 4 })?.key {
-                return Set(cards.enumerated().filter { $0.element.rank == targetRank }.map { $0.offset })
-            }
-            return []
-            
-        case .threeOfAKind:
-            // Trouver le rang qui apparaît 3 fois
-            var rankCounts: [Rank: Int] = [:]
-            for card in cards {
-                rankCounts[card.rank, default: 0] += 1
-            }
-            if let targetRank = rankCounts.first(where: { $0.value == 3 })?.key {
-                return Set(cards.enumerated().filter { $0.element.rank == targetRank }.map { $0.offset })
-            }
-            return []
-            
-        case .twoPair:
-            // Trouver les 2 rangs qui apparaissent 2 fois
-            var rankCounts: [Rank: Int] = [:]
-            for card in cards {
-                rankCounts[card.rank, default: 0] += 1
-            }
-            let targetRanks = rankCounts.filter { $0.value == 2 }.map { $0.key }
-            return Set(cards.enumerated().filter { targetRanks.contains($0.element.rank) }.map { $0.offset })
-            
-        case .jacksOrBetter:
-            // Trouver le rang de la paire supérieure ou égale au Valet
-            var rankCounts: [Rank: Int] = [:]
-            for card in cards {
-                rankCounts[card.rank, default: 0] += 1
-            }
-            if let targetRank = rankCounts.first(where: { $0.value == 2 && $0.key.rawValue >= Rank.jack.rawValue })?.key {
-                return Set(cards.enumerated().filter { $0.element.rank == targetRank }.map { $0.offset })
-            }
-            return []
-            
-        case .highCard:
-            return []
-        }
-    }
-    
-    // MARK: - évaluation des mains
-    nonisolated func evaluateHandLogic(_ cards: [Card]) -> HandType {
-        guard cards.count == 5 else {
-            return .highCard
-        }
-        
-        // Tri descendant (Ace haut)
-        let sortedCards = cards.sorted { $0.rank > $1.rank }
-        let ranks = sortedCards.map { $0.rank }
-        let suits = sortedCards.map { $0.suit }
-        
-        let isFlush = Set(suits).count == 1
-        
-        // Détection du Straight
-        let isStraight = isStraightHand(ranks)
-        
-        // === Priorité des mains (du plus fort au plus faible) ===
-        
-        if isFlush && isStraight && ranks[0] == .ace && ranks[4] == .ten {
-            return .royalFlush
-        }
-        
-        if isFlush && isStraight { return .straightFlush }
-        
-        // Comptage des fréquences de chaque rang
-        var rankCount: [Rank: Int] = [:]
-        for rank in ranks {
-            rankCount[rank, default: 0] += 1
-        }
-        
-        let counts = rankCount.values.sorted(by: >)
-        
-        if counts.first == 4 { return .fourOfAKind }
-        if counts == [3, 2] { return .fullHouse }
-        if isFlush { return .flush }
-        if isStraight { return .straight }
-        if counts.first == 3 { return .threeOfAKind }
-        if counts == [2, 2, 1] { return .twoPair }
-        
-        if counts.first == 2 {
-            if let pairRank = rankCount.first(where: { $0.value == 2 })?.key,
-               pairRank.rawValue >= 11 {
-                return .jacksOrBetter
-            }
-        }
-        
-        return .highCard
-    }
-    
-    nonisolated func isStraightHand(_ ranks: [Rank]) -> Bool {
-        guard ranks.count == 5 else { return false }
-        
-        let values = ranks.map { $0.rawValue }
-        
-        // Straight normal : 5 cartes consécutives sans doublon
-        if Set(values).count == 5 && values[0] - values[4] == 4 {
-            return true
-        }
-        
-        // Wheel Straight : A-5-4-3-2
-        if ranks[0] == .ace &&
-           ranks[1] == .five &&
-           ranks[2] == .four &&
-           ranks[3] == .three &&
-           ranks[4] == .two {
-            return true
-        }
-        
-        return false
-    }
+
     
     // MARK: - Collecte et Doublage
     
@@ -371,12 +250,16 @@ final class VideoPokerViewModel {
     }
     
     func doubleOnColor(choiceIsRed: Bool) {
-        guard doubleCount < Self.maxDoubleAttempts && doubleWin > 0 else { return }
+        guard doubleCount < Self.maxDoubleAttempts && doubleWin > 0 && !isDoubleEvaluating else { return }
         
         SoundManager.shared.playButton()
+        isDoubleEvaluating = true
         
         deck.reset()
-        guard let drawnCard = deck.deal() else { return }
+        guard let drawnCard = deck.deal() else {
+            isDoubleEvaluating = false
+            return
+        }
         
         lastDoubleCard = drawnCard
         isFlippingDoubleCard = false
@@ -396,6 +279,7 @@ final class VideoPokerViewModel {
                 doubleWin *= 2
                 doubleCount += 1
                 message = "Gagné ! \(drawnCard.rank.displayString)\(drawnCard.suit.rawValue.uppercased())"
+                isDoubleEvaluating = false
             } else {
                 doubleWin = 0
                 lastWin = 0
@@ -403,6 +287,7 @@ final class VideoPokerViewModel {
                 
                 try? await Task.sleep(for: .seconds(1.5))
                 showDoubleScreen = false
+                isDoubleEvaluating = false
             }
         }
     }
@@ -458,61 +343,7 @@ final class VideoPokerViewModel {
     func autoHold() {
         guard gamePhase == .dealt else { return }
         SoundManager.shared.playButton()
-        heldIndices.removeAll()
-        
-        let handType = evaluateHandLogic(hand)
-        
-        switch handType {
-        case .royalFlush, .straightFlush, .fullHouse, .flush, .straight:
-            heldIndices = Set(0..<5)
-            return
-        default:
-            break
-        }
-        
-        if handType != .highCard {
-            var seen: [Rank: [Int]] = [:]
-            for (i, card) in hand.enumerated() {
-                seen[card.rank, default: []].append(i)
-            }
-            for indices in seen.values where indices.count >= 2 {
-                for idx in indices {
-                    heldIndices.insert(idx)
-                }
-            }
-            return
-        }
-        
-        // Pas de main payante — chercher 4 cartes vers un flush
-        let suitGroups = Dictionary(grouping: hand.indices, by: { hand[$0].suit })
-        if let group = suitGroups.values.first(where: { $0.count >= 4 }) {
-            heldIndices = Set(group)
-            return
-        }
-        
-        // Chercher 4 cartes vers un straight
-        for skip in 0..<5 {
-            let kept = (0..<5).filter { $0 != skip }
-            let values = kept.map { hand[$0].rank.rawValue }.sorted()
-            if Set(values).count == 4 {
-                if values[3] - values[0] == 3 {
-                    heldIndices = Set(kept)
-                    return
-                }
-                // Détection de la suite par le bas (A-2-3-4)
-                if values == [2, 3, 4, 14] {
-                    heldIndices = Set(kept)
-                    return
-                }
-            }
-        }
-        
-        // Garder les figures (Jack ou mieux)
-        for (i, card) in hand.enumerated() {
-            if card.rank.rawValue >= Rank.jack.rawValue {
-                heldIndices.insert(i)
-            }
-        }
+        heldIndices = PokerEngine.suggestHolds(for: hand)
     }
 }
 
