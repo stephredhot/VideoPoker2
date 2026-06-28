@@ -127,9 +127,9 @@ struct ContentView: View {
                             Button("") { viewModel.decreaseBet() }
                                 .keyboardShortcut(.leftArrow, modifiers: [])
                             Button("") { viewModel.increaseBet() }
-                                .keyboardShortcut("+", modifiers: [])
+                                .keyboardShortcut(.upArrow, modifiers: [])
                             Button("") { viewModel.decreaseBet() }
-                                .keyboardShortcut("-", modifiers: [])
+                                .keyboardShortcut(.downArrow, modifiers: [])
                             Button("") { viewModel.maxBet() }
                                 .keyboardShortcut("m", modifiers: [])
                         }

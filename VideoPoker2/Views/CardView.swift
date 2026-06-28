@@ -41,11 +41,11 @@ struct CardView: View {
         )
         .animation(.spring(response: 0.5, dampingFraction: 0.7), value: isFaceUp)
         .scaleEffect(isWinning ? winningPulse : 1.0)
-        .animation(.spring(response: 0.45, dampingFraction: 0.7), value: isWinning)
+        .animation(.spring(response: 0.5, dampingFraction: 0.7), value: isWinning)
         .onChange(of: isWinning) { _, newValue in
             if newValue {
                 withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
-                    winningPulse = 1.06
+                    winningPulse = 1.0
                 }
             } else {
                 withAnimation(.easeOut(duration: 0.3)) {
@@ -56,7 +56,7 @@ struct CardView: View {
         .onAppear {
             if isWinning {
                 withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
-                    winningPulse = 1.06
+                    winningPulse = 1.0
                 }
             }
         }

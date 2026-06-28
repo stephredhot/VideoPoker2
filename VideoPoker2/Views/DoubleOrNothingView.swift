@@ -53,7 +53,7 @@ struct DoubleOrNothingView: View {
             
             // INFOS GAINS ET BOUTONS
             VStack(spacing: 20) {
-                Text("Gain à gagner : \(viewModel.doubleWin * 2) pts")
+                Text("Gain possible : \(viewModel.doubleWin * 2) crédits")
                     .font(.title3.bold())
                     .foregroundColor(.gold)
                     .opacity(viewModel.doubleWin > 0 ? 1 : 0)

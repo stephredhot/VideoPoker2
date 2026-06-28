@@ -184,7 +184,7 @@ final class VideoPokerViewModel {
         for index in 0..<5 where !heldIndices.contains(index) {
             try? await Task.sleep(for: .seconds(0.15))
             
-            withAnimation(.spring(response: 0.52, dampingFraction: 0.68)) {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                 _ = faceUpCards.insert(index)   // ← on ignore explicitement
             }
             SoundManager.shared.playCardFlip()
